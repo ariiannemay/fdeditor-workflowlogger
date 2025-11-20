@@ -22,8 +22,9 @@
             padding: 0; 
             display: flex; 
             flex-direction: column; 
-        }
-        
+            /* 🟢 FIX: Add padding to the bottom of the body to lift the footer */
+            padding-bottom: 2rem; /* Adds padding equal to Tailwind's 'pb-8' or 'p-8' */
+        }        
         /* Main Container: Takes full screen height/width and applies padding */
         .main-container {
             width: 100%;
@@ -153,7 +154,11 @@
                     </button>
                 </div>
             </div>
-            <p class="text-xs text-gray-500 mt-3">Use <strong>Import/Export (.json)</strong> to back up or move your list.</p>
+            <p class="text-xs text-gray-500 mt-3">Use <strong>Import/Export (.json)</strong> to back up or move your list to a new browser.                         This is your personal database for formatted and verified speakers.
+                        Add a speaker according to the format in the
+                        <a href="https://docs.google.com/document/d/1Tk0hR3_UF1h-JCZHSKogYmGGINNQo4QmEowoULklsHs/edit?tab=t.0#heading=h.c57be8cefotz" target="_blank" class="text-blue-500 hover:text-blue-600 underline">FD Style Guide</a>.
+                        <strong>This is only visible to you.</strong>
+</p>
         </div>
         
         <div id="speaker-list-wrapper">
