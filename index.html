@@ -422,28 +422,28 @@ border: 1px solid #e5e7eb;
 margin-top: 1rem;
 }
 #filter-bar label {
-font-size: 0.875rem;
+font-size: 0.75rem; /* DECREASED FONT SIZE */
 font-weight: 600;
 /* SOURCE 68 */
 color: #374151;
 }
 /* SOURCE 69 */
 #filter-bar select, #filter-bar input[type="date"] { /* Added input[type="date"] */
-padding: 0.25rem 0.5rem;
+padding: 0.15rem 0.5rem; /* DECREASED PADDING */
 border: 1px solid #d1d5db;
 border-radius: 0.5rem;
-font-size: 0.875rem;
+font-size: 0.75rem; /* DECREASED FONT SIZE */
 }
 #clear-filter-btn {
-padding: 0.375rem 0.75rem;
-font-size: 0.875rem;
+padding: 0.25rem 0.75rem; /* DECREASED PADDING */
+font-size: 0.75rem; /* DECREASED FONT SIZE */
 font-weight: 600;
 background-color: #e5e7eb;
 color: #374151;
 border-radius: 0.5rem;
 transition: background-color 0.2s;
 /* SOURCE 70 */
-margin-left: auto; /* Pushes to the right */
+/* Removed margin-left: auto; to keep button inline */
 }
 #clear-filter-btn:hover { background-color: #d1d5db; }
 /* SPLIT BUTTON STYLES (for new resources)  */
@@ -935,12 +935,19 @@ border-left: 4px solid #9333ea; /* Purple for Dashboard */
                 <select id="filter-month">
                     <option value="all">All Months</option>
                 </select>
+                <label for="filter-file-type">File Type:</label>
+                <select id="filter-file-type">
+                    <option value="all">All File Types</option>
+                </select>
                 <label for="date-range-start">Start Date:</label>
                 <input type="date" id="date-range-start">
                 <label for="date-range-end">End Date:</label>
                 <input type="date" id="date-range-end">
-                <button id="clear-filter-btn">Clear Filter</button>
-            </div>
+                
+                <div class="flex items-center ml-auto">
+                    <button id="clear-filter-btn">Clear Filter</button>
+                </div>
+                </div>
             <div id="log-toast-container" class="toast-container mb-4 mt-4"></div>
             <div class="grid grid-cols-[2.5fr_1.5fr_1.5fr_1.5fr] gap-4 mb-3 p-3 bg-indigo-100 text-indigo-800 font-bold text-sm sm:text-base rounded-t-lg px-5">
                 <div>File Name & Duration</div>
@@ -1256,6 +1263,7 @@ fileType: 'live', //  Default to 'live'
 speakers: [], //  ADDED SPEAKER STATE
 filterMonth: 'all', //  NEW FILTER STATE
 filterYear: 'all', //  NEW FILTER STATE
+filterFileType: 'all', // NEW FILE TYPE FILTER STATE
 /* SOURCE 119 */
 editingLogIndex: null //  NEW: Tracks which log is being edited
 };
@@ -1369,6 +1377,7 @@ dateRangeEnd: document.getElementById('date-range-end'),
 // --- Filter Bar Elements ---
 filterYearSelect: document.getElementById('filter-year'),
 filterMonthSelect: document.getElementById('filter-month'),
+filterFileTypeSelect: document.getElementById('filter-file-type'), // NEW FILE TYPE SELECT
 clearFilterBtn: document.getElementById('clear-filter-btn'),
 // --- Performance Analysis Elements (NEW) ---
 cumulativeTatChart: document.getElementById('cumulativeTatChart'),
@@ -2355,9 +2364,13 @@ return ts >= startTime && ts <= endTime;
 // Original Month/Year Filter (if no custom range set)
 const logYear = d.getFullYear().toString();
 const logMonth = d.toLocaleString('en-US', { month: 'long' });
+// NEW FILE TYPE FILTER
+const logFileType = (item.log.fileType || 'live').toLowerCase(); // Default old logs to 'live'
 const yearMatch = (STATE.filterYear === 'all') || (logYear === STATE.filterYear);
 const monthMatch = (STATE.filterMonth === 'all') || (logMonth === STATE.filterMonth);
-return yearMatch && monthMatch;
+const fileTypeMatch = (STATE.filterFileType === 'all') || (logFileType === STATE.filterFileType);
+
+return yearMatch && monthMatch && fileTypeMatch; // Include new filter check
 });
 // 2. Calculate Totals *from the filtered list* and group dates
 const totalAH = logsToDisplay.reduce((s, item) => s + (parseFloat(item.log.audioHours) || 0), 0).toFixed(2);
@@ -2680,7 +2693,7 @@ showSpeakerMessage('Speaker deleted.', false);
 }
 }
 function exportSpeakers() {
-if (STATE.speakers.length === 0) {
+if (!STATE.speakers.length) {
 showLogToast('No speakers to export.', false);
 return;
 }
@@ -2978,6 +2991,7 @@ saveLogs();
 function populateFilterOptions() {
 const uniqueYears = new Set();
 const uniqueMonths = new Set();
+const uniqueFileTypes = new Set(); // NEW FILE TYPE SET
 const monthOrder = [
 "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
 "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
@@ -2988,6 +3002,7 @@ if (ts) {
 const d = new Date(ts);
 uniqueYears.add(d.getFullYear().toString());
 uniqueMonths.add(d.toLocaleString('en-US', { month: 'long' }));
+uniqueFileTypes.add((log.fileType || 'live').toLowerCase()); // Add file type
 }
 });
 // Sort and populate Years
@@ -3000,28 +3015,45 @@ DOM.filterMonthSelect.innerHTML = '<option value="all">All Months</option>';
 [...uniqueMonths].sort((a, b) => monthOrder.indexOf(a.toUpperCase()) - monthOrder.indexOf(b.toUpperCase())).forEach(month => { // Sort by calendar order
 DOM.filterMonthSelect.innerHTML += `<option value="${month}">${month}</option>`;
 });
+
+// Populate File Types (in a predefined order)
+DOM.filterFileTypeSelect.innerHTML = '<option value="all">All File Types</option>';
+const fileTypeOrder = ['live', 'batch', 'hp', 'aiera'];
+fileTypeOrder.filter(type => uniqueFileTypes.has(type)).forEach(type => {
+    DOM.filterFileTypeSelect.innerHTML += `<option value="${type}">${type.toUpperCase()} File</option>`;
+});
+// Handle any potential unknown/old file types that might exist (e.g. from a very old log)
+[...uniqueFileTypes].filter(type => !fileTypeOrder.includes(type)).forEach(type => {
+    DOM.filterFileTypeSelect.innerHTML += `<option value="${type}">${type.toUpperCase()} File (Other)</option>`;
+});
+
+
 // Restore selection
 DOM.filterYearSelect.value = STATE.filterYear;
 DOM.filterMonthSelect.value = STATE.filterMonth;
+DOM.filterFileTypeSelect.value = STATE.filterFileType;
 }
 function handleFilterChange() {
 // Determine if a Date Range is active
 const isDateRangeActive = DOM.dateRangeStart.value || DOM.dateRangeEnd.value;
 if (isDateRangeActive) {
-// Clear Year/Month selection if Date Range is used
+// Clear Year/Month/File Type selection if Date Range is used
 STATE.filterYear = 'all';
 STATE.filterMonth = 'all';
+STATE.filterFileType = 'all'; // NEW: Reset File Type
 DOM.filterYearSelect.value = 'all';
 DOM.filterMonthSelect.value = 'all';
+DOM.filterFileTypeSelect.value = 'all'; // NEW: Reset File Type
 } else {
-// Clear Date Range inputs if Year/Month selectors are used
-if (DOM.filterYearSelect.value !== 'all' || DOM.filterMonthSelect.value !== 'all') {
+// Clear Date Range inputs if Year/Month/File Type selectors are used
+if (DOM.filterYearSelect.value !== 'all' || DOM.filterMonthSelect.value !== 'all' || DOM.filterFileTypeSelect.value !== 'all') { // NEW: Check File Type
     DOM.dateRangeStart.value = '';
 DOM.dateRangeEnd.value = '';
 }
-// Apply Year/Month selection
+// Apply Year/Month/File Type selection
 STATE.filterYear = DOM.filterYearSelect.value;
 STATE.filterMonth = DOM.filterMonthSelect.value;
+STATE.filterFileType = DOM.filterFileTypeSelect.value; // NEW: Apply File Type
 }
 updateLogDisplay();
 // Re-render the log display with the filter
@@ -3030,8 +3062,10 @@ updateDashboard(); // Re-render dashboard/chart with the new filter
 function clearFilters() {
 STATE.filterYear = 'all';
 STATE.filterMonth = 'all';
+STATE.filterFileType = 'all'; // NEW: Clear File Type
 DOM.filterYearSelect.value = 'all';
 DOM.filterMonthSelect.value = 'all';
+DOM.filterFileTypeSelect.value = 'all'; // NEW: Clear File Type
 //  NEW: Clear Date Range Inputs
 DOM.dateRangeStart.value = '';
 DOM.dateRangeEnd.value = '';
@@ -3177,12 +3211,16 @@ function getFilteredLogsForChart() {
             return ts >= startTime && ts <= endTime;
         }
 
-        // Year/Month Filter (if set)
+        // Year/Month/File Type Filter (if set)
         const logYear = d.getFullYear().toString();
         const logMonth = d.toLocaleString('en-US', { month: 'long' });
+        const logFileType = (log.fileType || 'live').toLowerCase(); // Get file type
+        
         const yearMatch = (STATE.filterYear === 'all') || (logYear === STATE.filterYear);
         const monthMatch = (STATE.filterMonth === 'all') || (logMonth === STATE.filterMonth);
-        return yearMatch && monthMatch;
+        const fileTypeMatch = (STATE.filterFileType === 'all') || (logFileType === STATE.filterFileType); // NEW FILE TYPE MATCH
+        
+        return yearMatch && monthMatch && fileTypeMatch; // Include new filter check
     }).filter(log => log.frTimeSec > 0 && log.audioLengthSeconds > 0);
 // Only include completed logs with data
 }
@@ -3239,48 +3277,53 @@ const chartData = [];
 function renderCumulativeChart(metricType) {
     const watrData = generateWatrData(metricType);
     
-    /* SOURCE 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 481, 482 */
+    // 1. Destroy old chart instance if it exists (CRITICAL FIX)
     if (DOM.currentChartInstance) {
         DOM.currentChartInstance.destroy();
+        DOM.currentChartInstance = null; // Clear reference
     }
     
+    // 2. Handle no data scenario
     if (watrData.length === 0) {
-        // Find the canvas parent element to write the message
         const chartContainer = DOM.cumulativeTatChart.parentElement;
-if (chartContainer) {
-            // Restore the canvas container if it was replaced
-             if (chartContainer.querySelector('canvas')) { DOM.cumulativeTatChart.remove();
-}
+        // Ensure the canvas element exists to be removed or replaced
+        let canvasElement = DOM.cumulativeTatChart;
+        if (canvasElement && chartContainer.contains(canvasElement)) {
+            // Remove the old canvas element entirely to guarantee a fresh start
+            canvasElement.remove();
+        }
             
-            chartContainer.style.height = '100px';
-// Set a small height for the message
-            chartContainer.innerHTML = '<p class="text-center text-gray-500 mt-4">No completed files to calculate TAT Trend Analysis for the selected filter.</p>';
-}
+        chartContainer.style.height = '100px';
+        chartContainer.innerHTML = '<p class="text-center text-gray-500 mt-4">No completed files to calculate TAT Trend Analysis for the selected filter.</p>';
         return;
     }
     
-    // Restore the canvas if it was replaced by a message
-    const chartContainer = DOM.cumulativeTatChart.parentElement;
-if (!chartContainer.querySelector('canvas')) {
+    // 3. Re-create the canvas element if it was removed
+    let chartCanvas = document.getElementById('cumulativeTatChart');
+    if (!chartCanvas) {
+        const chartContainer = document.querySelector('#watr-chart-details > .panel-content > div:last-child');
         chartContainer.innerHTML = '<canvas id="cumulativeTatChart" width="800" height="400"></canvas>';
-// Re-get the canvas element reference if it was destroyed and recreated
-        DOM.cumulativeTatChart = document.getElementById('cumulativeTatChart');
-}
+        chartCanvas = document.getElementById('cumulativeTatChart');
+        // Re-assign the DOM reference
+        DOM.cumulativeTatChart = chartCanvas; 
+    }
     
-    // Dynamic height for horizontal chart: 25px per file + 100px for padding
-    chartContainer.style.height = `${watrData.length * 25 + 100}px`;
-const labels = watrData.map(d => d.label);
+    // 4. Render the chart
+    const labels = watrData.map(d => d.label);
     const actualData = watrData.map(d => d.actualWatr);
     const targetData = watrData.map(d => d.targetWatr);
-const barColors = watrData.map(d => d.barColor);
+    const barColors = watrData.map(d => d.barColor);
 
-    // Dynamic Title
+    const chartContainer = DOM.cumulativeTatChart.parentElement;
+    // Dynamic height for horizontal chart: 25px per file + 100px for padding
+    chartContainer.style.height = `${watrData.length * 25 + 100}px`;
+
     let titleText = `${metricType.toUpperCase()} TAT Trend Analysis - Showing ${watrData.length} Files`;
-if (metricType === 'fr') { titleText += ` (Target: ~0.5)` }
+    if (metricType === 'fr') { titleText += ` (Target: ~0.5)` }
     else if (metricType === 'overall') { titleText += ` (Target: ~2.0)` }
 
     const ctx = DOM.cumulativeTatChart.getContext('2d');
-DOM.currentChartInstance = new Chart(ctx, {
+    DOM.currentChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -3328,11 +3371,11 @@ DOM.currentChartInstance = new Chart(ctx, {
                             let label = context.dataset.label || '';
                             if (label) {
                                 label += ': ';
-}
+                            }
                             const watr = context.parsed.x;
-const target = context.chart.data.datasets[0].data[context.dataIndex];
+                            const target = context.chart.data.datasets[0].data[context.dataIndex];
                             const status = watr <= target ? ' WITHIN TAT' : ' EXCEEDED TAT';
-return `${label} ${watr.toFixed(2)} (${status})`;
+                            return `${label} ${watr.toFixed(2)} (${status})`;
                         }
                     }
                 }
@@ -3340,7 +3383,7 @@ return `${label} ${watr.toFixed(2)} (${status})`;
         }
     });
 }
-// ===  MODIFIED INIT (FIXED LISTENERS) ===
+// === MODIFIED INIT (FIXED LISTENERS) ===
 /* SOURCE 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505 */
 window.onload = () => {
 updateLiveClock(); STATE.clockIntervalId = setInterval(updateLiveClock, 1000);
@@ -3472,6 +3515,7 @@ DOM.dateRangeEnd.addEventListener('change', handleFilterChange);
 // ===  ADD FILTER BAR LISTENERS (FIXED)  ===
 DOM.filterYearSelect.addEventListener('change', handleFilterChange);
 DOM.filterMonthSelect.addEventListener('change', handleFilterChange);
+DOM.filterFileTypeSelect.addEventListener('change', handleFilterChange); // NEW FILE TYPE LISTENER
 DOM.clearFilterBtn.addEventListener('click', clearFilters);
 //  NEW CHART LISTENERS (Add these) 
 DOM.tatChartType.addEventListener('change', (e) => {
