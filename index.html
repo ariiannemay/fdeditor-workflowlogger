@@ -534,7 +534,7 @@ border-left: 4px solid #9333ea; /* Purple for Dashboard */
 .time-widget {
     /* UPDATED: Dark Blue */
     /* SOURCE 509 */
-    background: #041650; color: #ffffff;
+    background: #00000; color: #000000;
     /* ADJUSTED: Slightly increased overall padding */
     padding: .75rem; 
     border-radius: 0.75rem; 
@@ -547,11 +547,17 @@ border-left: 4px solid #9333ea; /* Purple for Dashboard */
     line-height: 1.2;
     /* SOURCE 511 */
     height: 100%;
+    
+    /* 🎨 NEW: Digital Clock Border Style */
+    border: 15px solid #041650; /* Dark gray border */
+    /* Inner shadow to mimic screen bezel/bezel lift */
+    box-shadow: inset 0 0 0 2px #fefefe, /* Inner white frame (2px width) */
+                0 4px 6px -1px rgba(0,0,0,0.3); /* Outer drop shadow */
 }
 .widget-label { /* New style for "TODAY IS" */
     /* SOURCE 512 */
     font-size: 1.25rem; /* UPDATED: Light red/pink color for subtle contrast */
-    color: #00000;
+    color: #000000;
     text-transform: uppercase;
     /* SOURCE 513 */
     font-weight: 600; /* REMOVED: Redundant underline properties */
@@ -559,12 +565,12 @@ border-left: 4px solid #9333ea; /* Purple for Dashboard */
 }
 .time-widget .date-display {
     /* SOURCE 514 */
-    font-size: 1.25rem; color: #ffffff; 
+    font-size: 1.25rem; color: #000000; 
     font-weight: 800; 
     text-transform: uppercase; 
     /* Underline border to separate date and time */
     /* SOURCE 515 */
-    border-bottom: 2px solid #ffffff; padding-bottom: 0.5rem; 
+    border-bottom: 2px solid #000000; padding-bottom: 0.5rem; 
     margin-bottom: 0.5rem; 
     width: 90%; 
     text-align: center; 
@@ -572,7 +578,7 @@ border-left: 4px solid #9333ea; /* Purple for Dashboard */
 .time-widget .time-display {
     /* Slightly smaller font for better fit with the border */
     /* SOURCE 516 */
-    font-size: 3rem; font-family: 'Inter', monospace; 
+    font-size: 2.75rem; font-family: 'Inter', monospace; 
     letter-spacing: 0.05em;
     line-height: 1; 
 }
@@ -687,7 +693,7 @@ border-left: 4px solid #9333ea; /* Purple for Dashboard */
 
         <div id="clock-widget" class="time-widget">
             <div class="flex items-center mb-1">
-                <i data-lucide="calendar" class="w-7 h-7 text-white mr-2"></i> 
+                <i data-lucide="calendar" class="w-8 h-8 text-blue mr-2"></i> 
                 <span class="widget-label">TODAY IS</span> 
             </div>
             <span id="date-display" class="date-display">...</span>
